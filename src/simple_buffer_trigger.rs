@@ -1,37 +1,48 @@
 use crate::BufferTrigger;
-use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::{
+    mpsc::{self, Receiver, Sender},
+    Mutex, RwLock,
+};
 use std::thread;
 use std::{fmt, mem, time::Duration};
-/// 简单的 `BufferTrigger`
-/// 自己设置容器在当前服务存储
-pub struct SimpleBufferTrigger<E, C>
-where
-    E: fmt::Debug,
-{
-    /// 名字
-    name: String,
-    /// 容器的默认生成函数
-    defalut_container: fn() -> C,
+
+struct Container<E, C> {
+    /// 是否有闹钟
+    clock: bool,
     /// 容器元素个数
     len: usize,
     /// 缓存
     container: C,
     /// 聚合函数
     accumulator: fn(&mut C, E) -> (),
+}
+/// 简单的 `BufferTrigger`
+/// 自己设置容器在当前服务存储
+pub struct SimpleBufferTrigger<E, C>
+where
+    E: fmt::Debug,
+    C: fmt::Debug,
+{
+    /// 名字
+    name: String,
+    /// 容器的默认生成函数
+    defalut_container: fn() -> C,
+    /// 容器
+    container: RwLock<Container<E, C>>,
     /// 需要执行的方法
     consumer: fn(C) -> (),
     /// 超过多少元素后触发
     max_len: usize,
-    /// 是否有闹钟
-    clock: bool,
     /// 一个元素被保存后最多等待的时长
     interval: Option<Duration>,
-    // 通知触发的mpsc
-    channel: (Sender<()>, Receiver<()>),
+    /// 通知触发的mpsc
+    sender: Mutex<Sender<()>>,
+    receiver: Mutex<Receiver<()>>,
 }
 impl<E, C> fmt::Debug for SimpleBufferTrigger<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "name {}", self.name)
@@ -40,24 +51,35 @@ where
 impl<E, C> BufferTrigger<E> for SimpleBufferTrigger<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     fn len(&self) -> usize {
-        self.len
+        if let Ok(c) = self.container.read() {
+            c.len
+        } else {
+            0
+        }
     }
-    fn push(&mut self, value: E) {
-        (self.accumulator)(&mut self.container, value);
-        let clock = self.clock;
-        self.len += 1;
-        if !clock {
-            if let Some(dur) = self.interval {
-                self.clock = true;
-                let sender = self.channel.0.clone();
-                let _ = thread::spawn(move || {
-                    thread::sleep(dur);
-                    if let Err(e) = sender.send(()) {
-                        log::error!("auto clock trigger error {}", e);
-                    }
-                });
+    fn push(&self, value: E) {
+        if let Ok(mut c) = self.container.write() {
+            (c.accumulator)(&mut c.container, value);
+            c.len += 1;
+            let clock = c.clock;
+            if !clock {
+                if let Some(dur) = self.interval {
+                    c.clock = true;
+                    let sender = if let Ok(sender) = self.sender.lock() {
+                        sender.clone()
+                    } else {
+                        panic!()
+                    };
+                    let _ = thread::spawn(move || {
+                        thread::sleep(dur);
+                        if let Err(e) = sender.send(()) {
+                            log::error!("auto clock trigger error {}", e);
+                        }
+                    });
+                }
             }
         }
         if self.len() >= self.max_len {
@@ -65,31 +87,41 @@ where
         }
     }
 
-    fn trigger(&mut self) {
+    fn trigger(&self) {
         if !self.is_empty() {
-            self.len = 0;
-            let mut new_cahce = (self.defalut_container)();
-            mem::swap(&mut new_cahce, &mut self.container);
-            self.clock = false;
-            (self.consumer)(new_cahce);
+            if let Ok(mut c) = self.container.write() {
+                c.len = 0;
+                let mut new_cahce = (self.defalut_container)();
+                mem::swap(&mut new_cahce, &mut c.container);
+                c.clock = false;
+                (self.consumer)(new_cahce);
+            }
         }
     }
 
     fn is_empty(&self) -> bool {
-        self.len == 0
+        self.len() == 0
     }
 }
 
 impl<E, C> SimpleBufferTrigger<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     /// 监听时钟触发
-    pub fn listen_clock_trigger(&mut self) {
+    pub fn listen_clock_trigger(&self) {
         log::info!("{:?} listen_clock_trigger", self);
-        while self.channel.1.recv().is_ok() {
-            if self.clock {
-                self.trigger();
+        while let Ok(recevier) = self.receiver.lock() {
+            if recevier.recv().is_ok() {
+                let clock = if let Ok(c) = self.container.read() {
+                    c.clock
+                } else {
+                    false
+                };
+                if clock {
+                    self.trigger();
+                }
             }
         }
     }
@@ -98,6 +130,7 @@ where
 impl<E, C> Drop for SimpleBufferTrigger<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     fn drop(&mut self) {
         self.trigger();
@@ -126,6 +159,7 @@ where
 impl<E, C> fmt::Debug for Builder<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "name {}", self.name)
@@ -134,6 +168,7 @@ where
 impl<E, C> Builder<E, C>
 where
     E: fmt::Debug,
+    C: fmt::Debug,
 {
     /// init
     pub fn builder() -> Self {
@@ -184,17 +219,21 @@ where
 
     /// `build`
     pub fn build(self) -> SimpleBufferTrigger<E, C> {
+        let (sender, receiver) = mpsc::channel();
         SimpleBufferTrigger {
             name: self.name,
-            len: 0,
             defalut_container: self.defalut_container,
-            container: (self.defalut_container)(),
-            accumulator: self.accumulator,
+            container: RwLock::new(Container {
+                len: 0,
+                accumulator: self.accumulator,
+                container: (self.defalut_container)(),
+                clock: false,
+            }),
             consumer: self.consumer,
             max_len: self.max_len,
-            clock: false,
             interval: self.interval,
-            channel: mpsc::channel(),
+            sender: Mutex::new(sender),
+            receiver: Mutex::new(receiver),
         }
     }
 }

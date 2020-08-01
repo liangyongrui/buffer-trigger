@@ -49,11 +49,11 @@ pub trait BufferTrigger<T> {
     fn len(&self) -> usize;
 
     /// 添加元素
-    fn push(&mut self, value: T);
+    fn push(&self, value: T);
 
     /// 手动触发
     /// drop 的时候记得触发
-    fn trigger(&mut self);
+    fn trigger(&self);
 }
 
 mod simple_buffer_trigger;

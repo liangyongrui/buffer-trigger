@@ -1,9 +1,9 @@
 [package]
 name = "buffer-trigger"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["liangyongrui <liangyongrui@gmail.com>"]
 edition = "2018"
-description = "A trigger for data collection based on quantity and time."
+description = "A data collection trigger based on the maximum number and refresh time"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/liangyongrui/buffer-trigger"
 readme = "readme.md"
