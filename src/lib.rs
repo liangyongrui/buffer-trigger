@@ -40,19 +40,18 @@
     clippy::redundant_pub_crate, // 和unreachable_pub冲突
 )]
 
-/// 支持的功能
+/// common trait
 pub trait BufferTrigger<T> {
-    /// 是否没有数据
+    /// is empty
     fn is_empty(&self) -> bool;
 
-    /// 获取Buffer中元素的个数
+    /// The number of elements in  `BufferTrigger`
     fn len(&self) -> usize;
 
-    /// 添加元素
+    /// add elements
     fn push(&self, value: T);
 
-    /// 手动触发
-    /// drop 的时候记得触发
+    /// Manual trigger
     fn trigger(&self);
 }
 

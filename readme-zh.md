@@ -36,7 +36,7 @@
 
 ## Introduction
 
-_buffer-trigger_ 一个基于数量和时间的数据收集触发器
+一个基于数量和时间的数据收集触发器
 
 使用场景：
 
@@ -58,15 +58,15 @@ use std::{thread, time::Duration};
 
 lazy_static! {
     static ref BUFFER_TRIGGER: SimpleBufferTrigger<i32, Vec<i32>> =
-        SimpleBufferTriggerBuilder::<i32, Vec<i32>>::builder()
+        SimpleBufferTriggerBuilder::<i32, Vec<i32>>::builder(Vec::default)
             .name("test".to_owned())
-            .default_container(Vec::default)
             .accumulator(|c, e| c.push(e))
             .consumer(|c| log::info!("{:?}", c))
             .max_len(3)
             .interval(Duration::from_millis(500))
             .build();
 }
+
 #[test]
 fn it_works() {
     let _ = env_logger::builder()
