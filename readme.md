@@ -58,7 +58,7 @@ see [tests](/tests)
 extern crate lazy_static;
 use buffer_trigger::{BufferTrigger, SimpleBufferTrigger, SimpleBufferTriggerBuilder};
 use log::LevelFilter;
-use std::{thread, time::Duration};
+use std::{sync, thread, time::Duration};
 
 lazy_static! {
     static ref BUFFER_TRIGGER: SimpleBufferTrigger<i32, Vec<i32>> =
@@ -70,6 +70,7 @@ lazy_static! {
             .interval(Duration::from_millis(500))
             .build();
 }
+static START: sync::Once = sync::Once::new();
 
 #[test]
 fn it_works() {
@@ -78,8 +79,10 @@ fn it_works() {
         .filter_level(LevelFilter::Debug)
         .try_init();
 
-    thread::spawn(|| {
-        BUFFER_TRIGGER.listen_clock_trigger();
+    START.call_once(|| {
+        thread::spawn(|| {
+            BUFFER_TRIGGER.listen_clock_trigger();
+        });
     });
 
     BUFFER_TRIGGER.push(1);
