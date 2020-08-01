@@ -1,0 +1,19 @@
+[package]
+name = "buffer-trigger"
+version = "0.1.0"
+authors = ["liangyongrui <liangyongrui@gmail.com>"]
+edition = "2018"
+description = "A trigger for data collection based on quantity and time."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/liangyongrui/buffer-trigger"
+readme = "readme.md"
+keywords = ['buffer', 'trigger']
+categories = ['buffer', 'trigger']
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+log = "0.4"
+
+[dev-dependencies]
+lazy_static = "1.4"
+env_logger = "0.7"
