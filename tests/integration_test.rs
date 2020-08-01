@@ -15,6 +15,9 @@ lazy_static! {
             .interval(Duration::from_millis(500))
             .build();
 }
+
+     
+
 #[test]
 fn it_works() {
     let _ = env_logger::builder()
