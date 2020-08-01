@@ -16,8 +16,6 @@ lazy_static! {
             .build();
 }
 
-     
-
 #[test]
 fn it_works() {
     let _ = env_logger::builder()
