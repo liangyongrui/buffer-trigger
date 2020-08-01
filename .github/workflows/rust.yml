@@ -13,8 +13,6 @@ jobs:
       matrix:
         version:
           - stable
-          - beta
-          - nightly
 
     steps:
       - uses: actions/checkout@v2

@@ -1,7 +1,7 @@
 <h1 align="center">Buffer Trigger</h1>
 <div align="center">
  <strong>
-    A trigger for data collection based on volume and time.
+  一个基于数量和时间的数据收集触发器
  </strong>
 </div>
 <br />
@@ -34,20 +34,16 @@
 
 <br/>
 
-## Other language versions
-
-[简体中文](/readme-zh.md)
-
 ## Introduction
 
-A trigger for data collection based on volume and time.
+_buffer-trigger_ 一个基于数量和时间的数据收集触发器
 
-scenes to be used:
+使用场景：
 
-- Aggregate logs, output regularly and quantitatively.
-- Aggregate large amounts of MQ data and merge processing.
-- For a large number of update requests, you can update the cache first, and then merge and refresh the db.
-- ...All operations that require aggregation, throttling, etc. can be used.
+- 聚合日志，定时定量输出
+- 聚合 MQ 的大量数据，合并处理
+- 大量更新请求时，可以先更新 cache，再合并刷 db
+- ...所有需要聚合、节流等操作都可以用
 
 ## Basic usage
 
@@ -107,12 +103,12 @@ This project is still under development. The following features with the check m
 
 If you are concerned about an unimplemented feature, please tell me and I will finish writing it ASAP.
 
-- [x] Trigger timing based on quantity
-- [x] Trigger based on delay timing (each element can be stored in the container for the maximum time)
-- [ ] Various types of containers
-  - [x] Local container storage
-  - [ ] Remote Container Storage (redis)
-- [ ] You can specify the asynchronous version of runtime
+- [x] 根据数量定时触发
+- [x] 根据延迟定时触发（每个元素最多在容器中保存的时长）
+- [ ] 多种类型容器
+  - [x] 本地容器存储
+  - [ ] 远程容器存储(redis)
+- [ ] 可以指定 runtime 的异步版本
   - [ ] async-std
   - [ ] tokio
 
