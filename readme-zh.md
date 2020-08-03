@@ -53,7 +53,6 @@ see [tests](/tests)
 #[macro_use]
 extern crate lazy_static;
 use buffer_trigger::{BufferTrigger, SimpleBufferTrigger, SimpleBufferTriggerBuilder};
-use log::LevelFilter;
 use std::{sync, thread, time::Duration};
 
 lazy_static! {
@@ -70,11 +69,6 @@ static START: sync::Once = sync::Once::new();
 
 #[test]
 fn it_works() {
-    let _ = env_logger::builder()
-        .is_test(true)
-        .filter_level(LevelFilter::Debug)
-        .try_init();
-
     START.call_once(|| {
         thread::spawn(|| {
             BUFFER_TRIGGER.listen_clock_trigger();
@@ -110,7 +104,7 @@ If you are concerned about an unimplemented feature, please tell me and I will f
   - [x] 本地容器存储
   - [ ] 远程容器存储(redis)
 - [ ] 可以指定 runtime 的异步版本
-  - [ ] async-std
+  - [x] async-std
   - [ ] tokio
 
 ## License
