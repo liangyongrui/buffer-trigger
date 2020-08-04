@@ -34,10 +34,6 @@
 
 <br/>
 
-## Other language versions
-
-[简体中文](/readme-zh.md)
-
 ## Introduction
 
 A data collection trigger based on the maximum number and refresh time.
@@ -56,35 +52,32 @@ more see [tests](/tests)
 ```rust
 #[macro_use]
 extern crate lazy_static;
-use buffer_trigger::{BufferTrigger, SimpleBufferTrigger, SimpleBufferTriggerBuilder};
-use std::{sync, thread, time::Duration};
+use buffer_trigger::{
+    self, buffer_trigger_sync, buffer_trigger_sync::BufferTrigger,
+};
+use std::{sync::Once, thread, time::Duration};
 
 lazy_static! {
-    static ref BUFFER_TRIGGER: SimpleBufferTrigger<i32, Vec<i32>> =
-        SimpleBufferTriggerBuilder::<i32, Vec<i32>>::builder(Vec::default)
+    static ref SIMPLE_BUFFER_TRIGGER: buffer_trigger_sync::Simple<i32, Vec<i32>> =
+        buffer_trigger_sync::SimpleBuilder::builder(Vec::default)
             .name("test".to_owned())
             .accumulator(|c, e| c.push(e))
             .consumer(|c| log::info!("{:?}", c))
-            .max_len(3)
+            .max_len(15)
             .interval(Duration::from_millis(500))
             .build();
 }
-static START: sync::Once = sync::Once::new();
-
+static START: Once = Once::new();
 #[test]
-fn it_works() {
+fn simple_test() {
     START.call_once(|| {
         thread::spawn(|| {
-            BUFFER_TRIGGER.listen_clock_trigger();
+            SIMPLE_BUFFER_TRIGGER.listen_clock_trigger();
         });
     });
-
-    BUFFER_TRIGGER.push(1);
-    BUFFER_TRIGGER.push(2);
-    BUFFER_TRIGGER.push(3);
-    BUFFER_TRIGGER.push(4);
-    BUFFER_TRIGGER.push(5);
-
+    for i in 0..100 {
+        SIMPLE_BUFFER_TRIGGER.push(i);
+    }
     thread::sleep(Duration::from_secs(5));
 }
 ```
@@ -92,8 +85,13 @@ fn it_works() {
 output:
 
 ```text
-[1, 2, 3]
-[4, 5]
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+[15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
+[30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+[45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
+[60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74]
+[75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89]
+[90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
 ```
 
 ## Features
@@ -104,12 +102,14 @@ If you are concerned about an unimplemented feature, please tell me and I will f
 
 - [x] Trigger timing based on quantity
 - [x] Trigger based on delay timing (each element can be stored in the container for the maximum time)
-- [ ] Various types of containers
-  - [x] Local container storage
-  - [ ] Remote Container Storage (redis)
-- [ ] You can specify the asynchronous version of runtime
+- [ ] Different runtime
+  - [x] sync (Multithreading)
   - [x] async-std
   - [ ] tokio
+- [ ] Multiple type versions
+  - [x] general (You can use it to implement remote/local services, such as redis.)
+  - [x] simple (local service)
+  - [ ] reids (remote service demo)
 
 ## License
 
