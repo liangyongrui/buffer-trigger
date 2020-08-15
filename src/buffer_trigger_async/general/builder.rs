@@ -1,5 +1,6 @@
 use super::{General, Locker};
 use async_std::sync::{self, Mutex, RwLock};
+use lifetime_thread::Outer;
 use std::{fmt, time::Duration};
 /// general buffer trigger builer
 pub struct Builder<E, C, P>
@@ -131,9 +132,9 @@ where
     }
 
     /// `build`
-    pub fn build(self) -> General<E, C, P> {
+    pub fn build(self) -> Outer<General<E, C, P>> {
         let (sender, receiver) = sync::channel(10);
-        General {
+        let general = General {
             name: self.name,
             locker: RwLock::new(Locker {
                 get_len: self.get_len,
@@ -150,6 +151,15 @@ where
             interval: self.interval,
             sender: Mutex::new(sender),
             receiver: Mutex::new(receiver),
+        };
+        if self.interval.is_some() {
+            lifetime_thread::async_spawn(general, |inner| async move {
+                while let Some(g) = inner.get() {
+                    g.listen_clock_trigger().await
+                }
+            })
+        } else {
+            lifetime_thread::spawn(general, |_| {})
         }
     }
 }

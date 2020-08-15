@@ -1,12 +1,13 @@
 use super::{General, Locker};
+use lifetime_thread::Outer;
 use std::sync::{mpsc, Mutex, RwLock};
 use std::{fmt, time::Duration};
 /// general buffer trigger builer
 pub struct Builder<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     payload: Option<P>,
     name: String,
@@ -28,9 +29,9 @@ where
 
 impl<E, C, P> fmt::Debug for Builder<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "name {}", self.name)
@@ -39,9 +40,9 @@ where
 
 impl<E, C, P> Builder<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     /// init
     #[must_use]
@@ -130,9 +131,9 @@ where
     }
 
     /// `build`
-    pub fn build(self) -> General<E, C, P> {
+    pub fn build(self) -> Outer<General<E, C, P>> {
         let (sender, receiver) = mpsc::channel();
-        General {
+        let general = General {
             name: self.name,
             locker: RwLock::new(Locker {
                 get_len: self.get_len,
@@ -149,6 +150,15 @@ where
             interval: self.interval,
             sender: Mutex::new(sender),
             receiver: Mutex::new(receiver),
+        };
+        if self.interval.is_some() {
+            lifetime_thread::spawn(general, |inner| {
+                while let Some(g) = inner.get() {
+                    g.listen_clock_trigger()
+                }
+            })
+        } else {
+            lifetime_thread::spawn(general, |_| {})
         }
     }
 }

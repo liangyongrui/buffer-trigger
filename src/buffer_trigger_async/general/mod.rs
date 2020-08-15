@@ -33,9 +33,9 @@ where
 /// Set your own container to store in the current service
 pub struct General<E, C, P>
 where
-    P: fmt::Debug + Sync + Send,
-    E: fmt::Debug + Sync + Send,
-    C: fmt::Debug + Sync + Send,
+    P: fmt::Debug + Sync + Send + 'static,
+    E: fmt::Debug + Sync + Send + 'static,
+    C: fmt::Debug + Sync + Send + 'static,
 {
     name: String,
     locker: RwLock<Locker<E, C, P>>,

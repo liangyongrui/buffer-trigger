@@ -34,9 +34,9 @@ where
 /// Set your own container to store in the current service
 pub struct General<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send + 'static,
+    E: fmt::Debug + Send + 'static,
+    C: fmt::Debug + Send + 'static,
 {
     name: String,
     locker: RwLock<Locker<E, C, P>>,
@@ -52,9 +52,9 @@ where
 
 impl<E, C, P> fmt::Debug for General<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send + 'static,
+    E: fmt::Debug + Send + 'static,
+    C: fmt::Debug + Send + 'static,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "name {}", self.name)
@@ -63,9 +63,9 @@ where
 
 impl<E, C, P> super::BufferTrigger<E> for General<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     fn len(&self) -> usize {
         if let Ok(c) = self.locker.read() {
@@ -114,7 +114,13 @@ where
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
-
+}
+impl<E, C, P> General<E, C, P>
+where
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
+{
     /// start clock trigger listener
     fn listen_clock_trigger(&self) {
         log::info!("{:?} listen_clock_trigger", self);
@@ -132,12 +138,11 @@ where
         }
     }
 }
-
 impl<E, C, P> Drop for General<E, C, P>
 where
-    P: fmt::Debug,
-    E: fmt::Debug,
-    C: fmt::Debug,
+    P: fmt::Debug + Send,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     fn drop(&mut self) {
         self.trigger();

@@ -55,7 +55,7 @@ extern crate lazy_static;
 use buffer_trigger::{
     self, buffer_trigger_sync, buffer_trigger_sync::BufferTrigger,
 };
-use std::{sync::Once, thread, time::Duration};
+use std::{thread, time::Duration};
 
 lazy_static! {
     static ref SIMPLE_BUFFER_TRIGGER: buffer_trigger_sync::Simple<i32, Vec<i32>> =
@@ -67,17 +67,17 @@ lazy_static! {
             .interval(Duration::from_millis(500))
             .build();
 }
-static START: Once = Once::new();
 #[test]
 fn simple_test() {
-    START.call_once(|| {
-        thread::spawn(|| {
-            SIMPLE_BUFFER_TRIGGER.listen_clock_trigger();
-        });
-    });
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(LevelFilter::Debug)
+        .try_init();
+
     for i in 0..100 {
         SIMPLE_BUFFER_TRIGGER.push(i);
     }
+
     thread::sleep(Duration::from_secs(5));
 }
 ```

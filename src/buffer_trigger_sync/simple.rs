@@ -2,30 +2,30 @@ use super::{
     general::{self, General},
     BufferTrigger,
 };
+use lifetime_thread::Outer;
 use std::{fmt, mem, time::Duration};
 #[derive(Debug)]
 struct Payload<C>
 where
-    C: fmt::Debug,
+    C: fmt::Debug + Send,
 {
     len: usize,
     container: C,
     defalut_container: fn() -> C,
 }
 
-#[derive(Debug)]
 pub struct Simple<E, C>
 where
-    E: fmt::Debug,
-    C: fmt::Debug,
+    E: fmt::Debug + Send + 'static,
+    C: fmt::Debug + Send + 'static,
 {
-    general: General<E, C, Payload<C>>,
+    general: Outer<General<E, C, Payload<C>>>,
 }
 
 impl<E, C> BufferTrigger<E> for Simple<E, C>
 where
-    E: fmt::Debug,
-    C: fmt::Debug,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     fn is_empty(&self) -> bool {
         self.general.is_empty()
@@ -39,9 +39,9 @@ where
     fn trigger(&self) {
         self.general.trigger()
     }
-    fn listen_clock_trigger(&self) {
-        self.general.listen_clock_trigger()
-    }
+    // fn listen_clock_trigger(&self) {
+    //     self.general.listen_clock_trigger()
+    // }
 }
 
 pub struct Builder<E, C>
@@ -69,8 +69,8 @@ where
 
 impl<E, C> Builder<E, C>
 where
-    E: fmt::Debug,
-    C: fmt::Debug,
+    E: fmt::Debug + Send,
+    C: fmt::Debug + Send,
 {
     /// init
     pub fn builder(defalut_container: fn() -> C) -> Self {

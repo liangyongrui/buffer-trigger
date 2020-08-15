@@ -14,8 +14,6 @@ pub trait BufferTrigger<T> {
 
     /// Manual trigger
     fn trigger(&self);
-
-    fn listen_clock_trigger(&self);
 }
 
 pub use general::builder::Builder as GeneralBuilder;

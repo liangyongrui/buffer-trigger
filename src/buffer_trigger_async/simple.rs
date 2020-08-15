@@ -1,4 +1,5 @@
 use super::general::{self, General};
+use lifetime_thread::Outer;
 use std::{fmt, mem, time::Duration};
 #[derive(Debug)]
 struct Payload<C>
@@ -10,13 +11,12 @@ where
     defalut_container: fn() -> C,
 }
 
-#[derive(Debug)]
 pub struct Simple<E, C>
 where
-    E: fmt::Debug + Sync + Send,
-    C: fmt::Debug + Sync + Send,
+    E: fmt::Debug + Sync + Send + 'static,
+    C: fmt::Debug + Sync + Send + 'static,
 {
-    general: General<E, C, Payload<C>>,
+    general: Outer<General<E, C, Payload<C>>>,
 }
 
 impl<E, C> Simple<E, C>
