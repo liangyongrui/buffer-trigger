@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate lazy_static;
-use async_std::task;
 use buffer_trigger::{
     self, buffer_trigger_async, buffer_trigger_sync, buffer_trigger_sync::BufferTrigger,
 };
 use log::LevelFilter;
 use std::{thread, time::Duration};
+use tokio::time::sleep;
 
 lazy_static! {
     static ref SIMPLE_BUFFER_TRIGGER: buffer_trigger_sync::Simple<i32, Vec<i32>> =
@@ -41,7 +41,7 @@ lazy_static! {
             .interval(Duration::from_millis(500))
             .build();
 }
-#[async_std::test]
+#[tokio::test]
 async fn async_test() {
     let _ = env_logger::builder()
         .is_test(true)
@@ -52,5 +52,5 @@ async fn async_test() {
         ASYNC_BUFFER_TRIGGER.push(i).await;
     }
 
-    task::sleep(Duration::from_secs(5)).await;
+    sleep(Duration::from_secs(5)).await;
 }

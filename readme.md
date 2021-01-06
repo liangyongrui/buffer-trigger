@@ -102,10 +102,9 @@ If you are concerned about an unimplemented feature, please tell me and I will f
 
 - [x] Trigger timing based on quantity
 - [x] Trigger based on delay timing (each element can be stored in the container for the maximum time)
-- [ ] Different runtime
+- [x] Different runtime
   - [x] sync (Multithreading)
-  - [x] async-std
-  - [ ] tokio
+  - [x] tokio
 - [ ] Multiple type versions
   - [x] general (You can use it to implement remote/local services, such as redis.)
   - [x] simple (local service)

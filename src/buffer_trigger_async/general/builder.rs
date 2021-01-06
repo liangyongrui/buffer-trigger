@@ -1,7 +1,7 @@
 use super::{General, Locker};
-use async_std::sync::{self, Mutex, RwLock};
 use lifetime_thread::Outer;
 use std::{fmt, time::Duration};
+use tokio::sync::{mpsc::channel, Mutex, RwLock};
 /// general buffer trigger builer
 pub struct Builder<E, C, P>
 where
@@ -133,7 +133,7 @@ where
 
     /// `build`
     pub fn build(self) -> Outer<General<E, C, P>> {
-        let (sender, receiver) = sync::channel(10);
+        let (sender, receiver) = channel(10);
         let general = General {
             name: self.name,
             locker: RwLock::new(Locker {

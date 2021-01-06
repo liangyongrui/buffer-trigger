@@ -1,8 +1,6 @@
 //! buffer trigger
 
 #![deny(
-    // missing_docs,
-    warnings,
     clippy::all,
     clippy::correctness,
     clippy::style,

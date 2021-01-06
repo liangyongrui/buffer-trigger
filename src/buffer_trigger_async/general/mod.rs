@@ -1,8 +1,11 @@
-use async_std::{
-    sync::{Mutex, Receiver, RwLock, Sender},
-    task,
-};
 use std::{fmt, time::Duration};
+use tokio::{
+    sync::{
+        mpsc::{Receiver, Sender},
+        Mutex, RwLock,
+    },
+    time::sleep,
+};
 
 pub mod builder;
 struct Locker<E, C, P>
@@ -78,8 +81,8 @@ where
             if let (false, Some(dur)) = (c.clock, self.interval) {
                 c.clock = true;
                 let sender = self.sender.lock().await.clone();
-                let _ = task::spawn(async move {
-                    task::sleep(dur).await;
+                let _ = tokio::spawn(async move {
+                    sleep(dur).await;
                     sender.send(()).await
                 });
             }
@@ -105,7 +108,7 @@ where
     /// start clock trigger listener
     pub async fn listen_clock_trigger(&self) {
         log::info!("{:?} listen_clock_trigger", self);
-        while self.receiver.lock().await.recv().await.is_ok() {
+        while self.receiver.lock().await.recv().await.is_some() {
             let clock = self.locker.read().await.clock;
             if clock {
                 self.trigger().await;
